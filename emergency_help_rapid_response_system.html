@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emergency Help & Rapid Response System | Galgotias University</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            navy: {
+              900: '#0F172A',
+              800: '#1E293B',
+              700: '#334155',
+            },
+            crimson: {
+              600: '#DC2626',
+              700: '#B91C1C',
+              50: '#FEF2F2',
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.65); }
+      70% { transform: scale(1); box-shadow: 0 0 0 14px rgba(220, 38, 38, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+    .sos-pulse {
+      animation: pulseRing 2s infinite;
+    }
+    .tab-active {
+      border-bottom: 3px solid #DC2626;
+      color: #0F172A;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Toast / Non-Blocking Alert Banner -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Academic Disclaimer Top Strip -->
+  <div class="bg-amber-50 border-b border-amber-200 text-amber-900 text-xs py-1.5 px-4 text-center font-medium">
+    Academic Prototype — Galgotias University (B.Tech CSE, Sec 12) • For real life-threatening emergencies in India, dial <strong class="underline font-bold">112</strong> immediately.
+  </div>
+
+  <!-- Main Header / Navigation (FR-02, FR-13, FR-20) -->
+  <header class="bg-navy-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-wrap items-center justify-between py-3 gap-3">
+        <!-- Brand & Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-crimson-600 flex items-center justify-center shadow-lg shrink-0">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-base sm:text-lg font-extrabold tracking-tight leading-tight">Emergency Help & Rapid Response System</h1>
+              <span class="hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-sky-300 border border-slate-700">
+                Galgotias University • B.Tech CSE Project
+              </span>
+            </div>
+            <p class="text-xs text-slate-400">Centralized SOS Dispatch, Hospital Finder & Incident Management</p>
+          </div>
+        </div>
+
+        <!-- Right Controls: SOS Trigger & Auth/Role Switcher -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- High-Visibility SOS Quick Trigger -->
+          <button onclick="scrollToSOS()" class="sos-pulse bg-crimson-600 hover:bg-crimson-700 active:scale-95 text-white font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-lg transition cursor-pointer">
+            <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+            <span>SOS ALERT</span>
+          </button>
+
+          <!-- Current Session Status Badge -->
+          <div id="sessionIndicator" class="hidden sm:flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl text-xs">
+            <span id="roleDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span id="sessionLabel" class="font-medium text-slate-200">Citizen: Ambar Raj</span>
+          </div>
+
+          <!-- Auth / Role Action Buttons -->
+          <div class="flex items-center gap-1.5">
+            <button id="btnUserSwitch" onclick="openAuthModal('login')" class="bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition cursor-pointer">
+              Citizen Auth
+            </button>
+            <button id="btnAdminSwitch" onclick="handleAdminNavClick()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-xl transition cursor-pointer">
+              Admin Portal
+            </button>
+            <button id="btnLogout" onclick="logoutSession()" class="hidden bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition cursor-pointer" title="End Authenticated Session (FR-20)">
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ==================== CITIZEN / USER PORTAL VIEW ==================== -->
+    <div id="citizenPortalView" class="space-y-6">
+
+      <!-- Prominent Hero SOS Trigger Card (FR-04, FR-05, FR-09, FR-10) -->
+      <section id="sosHeroSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-navy-900 via-navy-800 to-slate-900 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="px-2.5 py-1 rounded-lg bg-crimson-600 text-white text-xs font-extrabold uppercase tracking-wider">Priority Module</span>
+            <h2 class="text-white font-bold text-base sm:text-lg">Rapid Emergency SOS Dispatch</h2>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-slate-300">
+            <span>Status:</span>
+            <span id="gpsStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-amber-300 font-medium">
+              Location Permission Pending
+            </span>
+          </div>
+        </div>
+
+        <div class="p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Left: Category Selection & Description -->
+          <div class="lg:col-span-7 space-y-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                1. Select Emergency Category (FR-05)
+              </label>
+              <div id="sosCategoryGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <!-- Populated dynamically via JS -->
+              </div>
+            </div>
+
+            <div>
+              <label for="sosDescription" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                2. Situation Details / Landmarks (Optional)
+              </label>
+              <textarea id="sosDescription" rows="2" placeholder="Describe the emergency briefly (e.g., Road accident near Pari Chowk, medical help needed)..."
+                class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-crimson-600 focus:border-transparent bg-slate-50"></textarea>
+            </div>
+          </div>
+
+          <!-- Right: Location Capture & Confirm SOS Trigger -->
+          <div class="lg:col-span-5 flex flex-col justify-between bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 space-y-4">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-600">3. Location Attachment (FR-09)</span>
+                <button type="button" onclick="captureUserLocation()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline cursor-pointer">
+                  Detect Live GPS
+                </button>
+              </div>
+
+              <div class="bg-white rounded-xl p-3 border border-slate-200 text-xs space-y-1">
+                <div class="flex justify-between">
+                  <span class="text-slate-500">Coordinates:</span>
+                  <span id="coordDisplay" class="font-mono font-semibold text-slate-800">Not captured yet</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-500">Permission State:</span>
+                  <span id="permStateText" class="font-medium text-slate-700">Awaiting user action</span>
+                </div>
+              </div>
+
+              <div>
+                <label for="manualLocationInput" class="block text-[11px] font-semibold text-slate-500 mb-1">
+                  Manual Address / Fallback Location (if GPS denied):
+                </label>
+                <input id="manualLocationInput" type="text" value="Knowledge Park II, Greater Noida, UP"
+                  placeholder="Enter sector, landmark, or city..."
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-navy-900" />
+              </div>
+            </div>
+
+            <div class="pt-1">
+              <button type="button" onclick="initiateSOSConfirmation()"
+                class="w-full py-3.5 px-5 rounded-xl bg-crimson-600 hover:bg-crimson-700 active:scale-[0.99] text-white font-extrabold text-sm sm:text-base shadow-lg shadow-red-600/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span>TRIGGER EMERGENCY SOS</span>
+              </button>
+              <p class="text-[11px] text-slate-500 text-center mt-2">
+                Requires confirmation modal before saving to database (UC-03).
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Module Navigation Tabs (FR-01 to FR-12) -->
+      <nav class="bg-white rounded-2xl shadow-sm border border-slate-200 px-2 sm:px-4 overflow-x-auto">
+        <div class="flex space-x-1 sm:space-x-4 min-w-max" role="tablist">
+          <button onclick="switchCitizenTab('requests')" id="tab-requests" class="tab-active py-3.5 px-3 text-xs sm:text-sm text-slate-600 hover:text-navy-900 transition flex items-center gap-1.5 cursor-pointer">
+            <span>SOS & Request Tracking</span>
+            <span id="badgeRequestCount" class="px-2 py-0.5 text-[11px] rounded-full bg-crimson-50 text-crimson-700 font-bold">0</span>
+          </button>
+          <button onclick="switchCitizenTab('services')" id="tab-services" class="py-3.5 px-3 text-xs sm:text-sm text-slate-600 hover:text-navy-900 transition cursor-pointer">
+            Emergency Services (FR-06)
+          </button>
+          <button onclick="switchCitizenTab('hospitals')" id="tab-hospitals" class="py-3.5 px-3 text-xs sm:text-sm text-slate-600 hover:text-navy-900 transition cursor-pointer">
+            Hospital Directory (FR-07)
+          </button>
+          <button onclick="switchCitizenTab('contacts')" id="tab-contacts" class="py-3.5 px-3 text-xs sm:text-sm text-slate-600 hover:text-navy-900 transition cursor-pointer">
+            Trusted Contacts (FR-08)
+          </button>
+          <button onclick="switchCitizenTab('reports')" id="tab-reports" class="py-3.5 px-3 text-xs sm:text-sm text-slate-600 hover:text-navy-900 transition cursor-pointer">
+            Incident Reporting (FR-11)
+          </button>
+          <button onclick="switchCitizenTab('profile')" id="tab-profile" class="py-3.5 px-3 text-xs sm:text-sm text-slate-600 hover:text-navy-900 transition cursor-pointer">
+            Profile & Auth (FR-01–03)
+          </button>
+        </div>
+      </nav>
+
+      <!-- TAB 1: SOS & Active Requests Tracking (FR-12) -->
+      <section id="panel-requests" class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-lg font-bold text-navy-900">Your Emergency Request History & Live Tracking</h3>
+            <p class="text-xs text-slate-500">Monitor status updates (`Pending` → `Dispatched` → `In Progress` → `Resolved`) in real time.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="filterRequestStatus" onchange="renderCitizenRequests()" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700">
+              <option value="ALL">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Dispatched">Dispatched</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div id="citizenRequestsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Rendered via JS -->
+        </div>
+      </section>
+
+      <!-- TAB 2: Emergency Services Directory (FR-06) -->
+      <section id="panel-services" class="hidden space-y-4">
+        <div>
+          <h3 class="text-lg font-bold text-navy-900">Authorized Emergency Helplines (India / Delhi NCR)</h3>
+          <p class="text-xs text-slate-500">One-click number copy or direct dial trigger for rapid assistance.</p>
+        </div>
+        <div id="servicesDirectoryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Rendered via JS -->
+        </div>
+      </section>
+
+      <!-- TAB 3: Hospital Directory & Search (FR-07) -->
+      <section id="panel-hospitals" class="hidden space-y-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3 justify-between items-center">
+          <div class="w-full sm:w-1/2">
+            <label for="hospitalSearchInput" class="sr-only">Search hospitals</label>
+            <input id="hospitalSearchInput" oninput="renderHospitals()" type="text" placeholder="Search hospital name, locality (Greater Noida, Delhi), or specialty..."
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-900" />
+          </div>
+          <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+            <select id="hospitalFilterService" onchange="renderHospitals()" class="rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold bg-slate-50">
+              <option value="ALL">All Facilities</option>
+              <option value="Trauma">24/7 Trauma Care</option>
+              <option value="ICU">ICU & Critical Care</option>
+              <option value="Ambulance">24/7 Ambulance</option>
+              <option value="Cardiac">Cardiac Emergency</option>
+            </select>
+          </div>
+        </div>
+        <div id="hospitalsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Rendered via JS -->
+        </div>
+      </section>
+
+      <!-- TAB 4: Trusted Emergency Contacts CRUD (FR-08) -->
+      <section id="panel-contacts" class="hidden space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Add/Edit Contact Form -->
+          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm h-fit">
+            <h3 id="contactFormTitle" class="text-base font-bold text-navy-900 mb-1">Add Trusted Emergency Contact</h3>
+            <p class="text-xs text-slate-500 mb-4">Store family or local guardians for rapid notification.</p>
+            <form id="contactForm" onsubmit="saveTrustedContact(event)" class="space-y-3">
+              <input type="hidden" id="editContactId" value="" />
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Contact Full Name *</label>
+                <input id="contactName" type="text" required placeholder="e.g., Shaurya Pratap Yadav"
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-900" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Relationship *</label>
+                <select id="contactRelation" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white">
+                  <option value="Family / Parent">Family / Parent</option>
+                  <option value="Project Partner / Friend">Project Partner / Friend</option>
+                  <option value="Roommate / Neighbor">Roommate / Neighbor</option>
+                  <option value="Doctor / Medical">Doctor / Medical</option>
+                  <option value="University Warden">University Warden</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">10-Digit Mobile Number *</label>
+                <input id="contactMobile" type="tel" maxlength="10" required placeholder="9876543210"
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-900" />
+              </div>
+              <div id="contactFormError" class="hidden text-xs text-crimson-600 font-medium bg-crimson-50 p-2 rounded-lg"></div>
+              <div class="flex gap-2 pt-1">
+                <button type="submit" class="flex-1 bg-navy-900 hover:bg-navy-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition cursor-pointer">
+                  Save Contact
+                </button>
+                <button type="button" id="btnCancelContactEdit" onclick="resetContactForm()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold py-2.5 px-3 rounded-xl transition cursor-pointer">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Contact List -->
+          <div class="lg:col-span-8 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-bold text-navy-900">Your Saved Emergency Contacts</h3>
+              <span id="contactCountLabel" class="text-xs font-semibold text-slate-500">0 contacts</span>
+            </div>
+            <div id="contactsListGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: Incident Reporting Module (FR-11) -->
+      <section id="panel-reports" class="hidden space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm h-fit">
+            <h3 class="text-base font-bold text-navy-900 mb-1">Report Non-Immediate Incident / Hazard</h3>
+            <p class="text-xs text-slate-500 mb-4">Log road hazards, fallen power lines, suspicious activity, or infrastructure issues.</p>
+            <form id="incidentReportForm" onsubmit="submitIncidentReport(event)" class="space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Incident Category *</label>
+                <select id="reportCategory" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white">
+                  <option value="Road Accident / Traffic Block">Road Accident / Traffic Block</option>
+                  <option value="Electrical / Fire Hazard">Electrical / Fire Hazard</option>
+                  <option value="Medical / Public Health">Medical / Public Health</option>
+                  <option value="Streetlight / Safety Concern">Streetlight / Safety Concern</option>
+                  <option value="Waterlogging / Natural Hazard">Waterlogging / Natural Hazard</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Severity Level *</label>
+                <select id="reportSeverity" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white">
+                  <option value="Low">Low — Advisory</option>
+                  <option value="Medium" selected>Medium — Needs Attention</option>
+                  <option value="High">High — Urgent Action Required</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Location / Landmark *</label>
+                <input id="reportLocation" type="text" required placeholder="e.g., Yamuna Expressway Service Road, Sector 17A"
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Detailed Description *</label>
+                <textarea id="reportDescription" rows="3" required placeholder="Provide clear details to help authorities review..."
+                  class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></textarea>
+              </div>
+              <button type="submit" class="w-full bg-navy-900 hover:bg-navy-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition cursor-pointer">
+                Submit Incident Report
+              </button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-7 space-y-3">
+            <h3 class="text-base font-bold text-navy-900">Submitted Incident Reports</h3>
+            <div id="incidentReportsList" class="space-y-3">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: User Profile & Account Management (FR-01, FR-02, FR-03) -->
+      <section id="panel-profile" class="hidden space-y-4">
+        <div id="guestProfileNotice" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 class="font-bold text-amber-900 text-sm">You are currently browsing as a Guest</h3>
+            <p class="text-xs text-amber-800 mt-0.5">Sign in or register a citizen account to manage your profile and link SOS requests.</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="openAuthModal('login')" class="bg-navy-900 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">Login</button>
+            <button onclick="openAuthModal('register')" class="bg-white border border-slate-300 text-slate-800 text-xs font-bold px-4 py-2 rounded-xl cursor-pointer">Register</button>
+          </div>
+        </div>
+
+        <div id="userProfileCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-2xl">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+            <div>
+              <h3 class="text-lg font-bold text-navy-900">Citizen Profile Information (FR-03)</h3>
+              <p class="text-xs text-slate-500">Keep your address and mobile updated for faster emergency response.</p>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">Verified Citizen</span>
+          </div>
+          <form onsubmit="updateUserProfile(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name *</label>
+                <input id="profName" type="text" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address (Unique) *</label>
+                <input id="profEmail" type="email" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Mobile Number *</label>
+                <input id="profMobile" type="tel" maxlength="10" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Account Created</label>
+                <input id="profCreated" type="text" disabled class="w-full rounded-xl border border-slate-200 bg-slate-100 text-slate-500 px-3.5 py-2 text-sm" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Residential / Campus Address *</label>
+              <textarea id="profAddress" rows="2" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm"></textarea>
+            </div>
+            <div class="flex justify-end">
+              <button type="submit" class="bg-navy-900 hover:bg-navy-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition cursor-pointer">
+                Update Profile
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== ADMINISTRATOR PORTAL VIEW (FR-13 to FR-19) ==================== -->
+    <div id="adminPortalView" class="hidden space-y-6">
+
+      <!-- Unauthorized Guard Banner (TC12: Normal user opens admin URL/view -> Access Denied) -->
+      <div id="adminAccessDenied" class="hidden bg-white border-2 border-crimson-600 rounded-2xl p-8 text-center max-w-lg mx-auto my-8 shadow-lg">
+        <div class="w-14 h-14 rounded-full bg-crimson-50 text-crimson-600 flex items-center justify-center mx-auto mb-3">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-extrabold text-navy-900">Access Denied (403 — Unauthorized)</h2>
+        <p class="text-sm text-slate-600 mt-2">Administrator authentication is required to access system management modules (FR-13 / TC12).</p>
+        <div class="mt-5 flex justify-center gap-3">
+          <button onclick="openAdminLoginModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer">
+            Admin Login
+          </button>
+          <button onclick="switchToCitizenView()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer">
+            Return to Citizen Portal
+          </button>
+        </div>
+      </div>
+
+      <!-- Authenticated Admin Dashboard Content -->
+      <div id="adminAuthenticatedContent" class="space-y-6">
+        <!-- Admin Top Banner -->
+        <div class="bg-navy-900 text-white rounded-2xl p-5 sm:p-6 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-md bg-indigo-500 text-white text-[11px] font-bold uppercase">Administrator Control Center</span>
+              <span class="text-xs text-slate-400">Logged in as <strong class="text-white">admin</strong></span>
+            </div>
+            <h2 class="text-xl font-extrabold mt-1">System Operations & Dispatch Management</h2>
+          </div>
+          <button onclick="switchToCitizenView()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition cursor-pointer">
+            ← Switch to Citizen View
+          </button>
+        </div>
+
+        <!-- KPI Summary Cards (FR-14) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs font-semibold text-slate-500">Registered Users</p>
+            <p id="kpiUsers" class="text-2xl font-extrabold text-navy-900 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-crimson-200 bg-crimson-50/40 shadow-sm">
+            <p class="text-xs font-semibold text-crimson-700">Active SOS Requests</p>
+            <p id="kpiActiveSOS" class="text-2xl font-extrabold text-crimson-600 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs font-semibold text-slate-500">Hospitals Listed</p>
+            <p id="kpiHospitals" class="text-2xl font-extrabold text-navy-900 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs font-semibold text-slate-500">Emergency Services</p>
+            <p id="kpiServices" class="text-2xl font-extrabold text-navy-900 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+            <p class="text-xs font-semibold text-slate-500">Incident Reports</p>
+            <p id="kpiReports" class="text-2xl font-extrabold text-navy-900 mt-1">0</p>
+          </div>
+        </div>
+
+        <!-- Admin Module Sub-Tabs -->
+        <div class="bg-white rounded-2xl border border-slate-200 px-3 overflow-x-auto">
+          <div class="flex space-x-3 min-w-max">
+            <button onclick="switchAdminTab('manageRequests')" id="admtab-manageRequests" class="tab-active py-3 px-3 text-xs sm:text-sm text-slate-600 cursor-pointer">
+              Manage SOS Requests (FR-16)
+            </button>
+            <button onclick="switchAdminTab('manageHospitals')" id="admtab-manageHospitals" class="py-3 px-3 text-xs sm:text-sm text-slate-600 cursor-pointer">
+              Manage Hospitals (FR-17)
+            </button>
+            <button onclick="switchAdminTab('manageServices')" id="admtab-manageServices" class="py-3 px-3 text-xs sm:text-sm text-slate-600 cursor-pointer">
+              Manage Services (FR-18)
+            </button>
+            <button onclick="switchAdminTab('manageReports')" id="admtab-manageReports" class="py-3 px-3 text-xs sm:text-sm text-slate-600 cursor-pointer">
+              Incident Reports (FR-19)
+            </button>
+            <button onclick="switchAdminTab('manageUsers')" id="admtab-manageUsers" class="py-3 px-3 text-xs sm:text-sm text-slate-600 cursor-pointer">
+              Registered Users (FR-15)
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin Panel 1: Manage SOS Requests (FR-16) -->
+        <div id="admpanel-manageRequests" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex flex-wrap justify-between items-center gap-2">
+            <h3 class="font-bold text-navy-900 text-base">All Emergency SOS Dispatch Queue</h3>
+            <span class="text-xs text-slate-500">Status updates immediately sync with User Request Tracking.</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+              <thead class="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-4">Req ID</th>
+                  <th class="py-3 px-4">Citizen</th>
+                  <th class="py-3 px-4">Type</th>
+                  <th class="py-3 px-4">Location / GPS</th>
+                  <th class="py-3 px-4">Description</th>
+                  <th class="py-3 px-4">Timestamp</th>
+                  <th class="py-3 px-4">Status Control</th>
+                </tr>
+              </thead>
+              <tbody id="adminRequestsTableBody" class="divide-y divide-slate-100">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin Panel 2: Manage Hospitals (FR-17) -->
+        <div id="admpanel-manageHospitals" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm h-fit">
+            <h3 id="admHospitalFormTitle" class="font-bold text-navy-900 text-base mb-3">Add / Edit Hospital</h3>
+            <form onsubmit="saveAdminHospital(event)" class="space-y-3">
+              <input type="hidden" id="admHospitalId" value="" />
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Hospital Name *</label>
+                <input id="admHospName" type="text" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Address *</label>
+                <input id="admHospAddress" type="text" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Emergency Phone *</label>
+                <input id="admHospPhone" type="text" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Available Services (comma-separated) *</label>
+                <input id="admHospServices" type="text" required placeholder="24/7 Trauma, ICU, Ambulance" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              </div>
+              <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer">Save Hospital</button>
+                <button type="button" id="btnCancelHospEdit" onclick="resetAdminHospitalForm()" class="hidden bg-slate-200 text-slate-800 text-xs font-bold py-2.5 px-3 rounded-xl cursor-pointer">Cancel</button>
+              </div>
+            </form>
+          </div>
+          <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 font-bold text-navy-900">Hospital Database Records</div>
+            <div id="adminHospitalsList" class="divide-y divide-slate-100"></div>
+          </div>
+        </div>
+
+        <!-- Admin Panel 3: Manage Emergency Services (FR-18) -->
+        <div id="admpanel-manageServices" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm h-fit">
+            <h3 id="admServiceFormTitle" class="font-bold text-navy-900 text-base mb-3">Add / Edit Emergency Service</h3>
+            <form onsubmit="saveAdminService(event)" class="space-y-3">
+              <input type="hidden" id="admServiceId" value="" />
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Service Name *</label>
+                <input id="admSvcName" type="text" required placeholder="e.g., Disaster Management" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Helpline Number *</label>
+                <input id="admSvcNumber" type="text" required placeholder="e.g., 1078" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Description *</label>
+                <textarea id="admSvcDesc" rows="2" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></textarea>
+              </div>
+              <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl cursor-pointer">Save Service</button>
+                <button type="button" id="btnCancelSvcEdit" onclick="resetAdminServiceForm()" class="hidden bg-slate-200 text-slate-800 text-xs font-bold py-2.5 px-3 rounded-xl cursor-pointer">Cancel</button>
+              </div>
+            </form>
+          </div>
+          <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 font-bold text-navy-900">Emergency Services Directory Records</div>
+            <div id="adminServicesList" class="divide-y divide-slate-100"></div>
+          </div>
+        </div>
+
+        <!-- Admin Panel 4: Manage Incident Reports (FR-19) -->
+        <div id="admpanel-manageReports" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 font-bold text-navy-900">Citizen Incident Reports Review</div>
+          <div id="adminReportsList" class="divide-y divide-slate-100"></div>
+        </div>
+
+        <!-- Admin Panel 5: Manage Registered Users (FR-15) -->
+        <div id="admpanel-manageUsers" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100 font-bold text-navy-900">Registered Citizens Database</div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+              <thead class="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-4">User ID</th>
+                  <th class="py-3 px-4">Name</th>
+                  <th class="py-3 px-4">Email</th>
+                  <th class="py-3 px-4">Mobile</th>
+                  <th class="py-3 px-4">Address</th>
+                  <th class="py-3 px-4">Registered On</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 1. SOS Confirmation Modal (UC-03 / TC05 & TC06) -->
+  <div id="sosConfirmModal" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-crimson-600 px-6 py-4 text-white flex items-center gap-3">
+        <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <h3 class="font-extrabold text-lg">Confirm Emergency SOS Dispatch</h3>
+      </div>
+      <div class="p-6 space-y-4">
+        <p class="text-sm text-slate-600">
+          Please verify your emergency request details before dispatching to the rapid response queue:
+        </p>
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-500 font-medium">Emergency Type:</span>
+            <span id="confirmSosType" class="font-bold text-crimson-600"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500 font-medium">Requesting User:</span>
+            <span id="confirmSosUser" class="font-semibold text-slate-800"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500 font-medium">Coordinates / Location:</span>
+            <span id="confirmSosLoc" class="font-mono font-semibold text-slate-800 text-right max-w-[210px]"></span>
+          </div>
+          <div>
+            <span class="text-slate-500 font-medium block">Description:</span>
+            <span id="confirmSosDesc" class="text-slate-800 italic"></span>
+          </div>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="cancelSOSConfirmation()" class="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-bold text-sm transition cursor-pointer">
+            Cancel (TC06)
+          </button>
+          <button type="button" onclick="confirmAndDispatchSOS()" class="flex-1 py-2.5 px-4 rounded-xl bg-crimson-600 hover:bg-crimson-700 text-white font-extrabold text-sm shadow-lg transition cursor-pointer">
+            Confirm & Send SOS
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Citizen Login / Registration Modal (FR-01, FR-02 / TC01–TC04) -->
+  <div id="citizenAuthModal" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-navy-900 px-6 py-4 text-white flex items-center justify-between">
+        <h3 id="authModalTitle" class="font-bold text-base">Citizen Authentication</h3>
+        <button onclick="closeAuthModal()" class="text-slate-400 hover:text-white text-lg font-bold cursor-pointer">&times;</button>
+      </div>
+      <div class="p-6">
+        <div class="flex rounded-xl bg-slate-100 p-1 mb-4">
+          <button type="button" id="switchLoginBtn" onclick="setAuthMode('login')" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-navy-900 shadow-xs cursor-pointer">Login (FR-02)</button>
+          <button type="button" id="switchRegBtn" onclick="setAuthMode('register')" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 cursor-pointer">Register (FR-01)</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="citizenLoginForm" onsubmit="handleCitizenLogin(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Email or Mobile *</label>
+            <input id="loginIdentifier" type="text" value="ambar.raj@galgotias.edu.in" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Password *</label>
+            <input id="loginPassword" type="password" value="ambar123" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+          </div>
+          <div id="loginErrorMsg" class="hidden text-xs text-crimson-600 bg-crimson-50 p-2.5 rounded-xl font-medium"></div>
+          <button type="submit" class="w-full bg-navy-900 hover:bg-navy-800 text-white font-bold text-sm py-2.5 rounded-xl transition cursor-pointer">
+            Sign In as Citizen
+          </button>
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Demo: ambar.raj@galgotias.edu.in / ambar123</span>
+            <button type="button" onclick="quickDemoCitizenLogin()" class="text-indigo-600 font-bold underline cursor-pointer">1-Click Demo</button>
+          </div>
+        </form>
+
+        <!-- Registration Form -->
+        <form id="citizenRegisterForm" onsubmit="handleCitizenRegister(event)" class="hidden space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name *</label>
+            <input id="regName" type="text" required placeholder="Enter full name" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Email *</label>
+              <input id="regEmail" type="email" required placeholder="name@example.com" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Mobile (10 digits) *</label>
+              <input id="regMobile" type="tel" maxlength="10" required placeholder="9876543210" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Password (min 6 chars) *</label>
+            <input id="regPassword" type="password" required placeholder="Create password" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Address *</label>
+            <input id="regAddress" type="text" required placeholder="Sector / City" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+          </div>
+          <div id="registerErrorMsg" class="hidden text-xs text-crimson-600 bg-crimson-50 p-2.5 rounded-xl font-medium"></div>
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-2.5 rounded-xl transition cursor-pointer">
+            Create Citizen Account
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Administrator Login Modal (FR-13 / TC11) -->
+  <div id="adminLoginModal" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="bg-indigo-700 px-6 py-4 text-white flex items-center justify-between">
+        <h3 class="font-bold text-base">Administrator Portal Authentication (FR-13)</h3>
+        <button onclick="closeAdminLoginModal()" class="text-indigo-200 hover:text-white text-lg font-bold cursor-pointer">&times;</button>
+      </div>
+      <form onsubmit="handleAdminLogin(event)" class="p-6 space-y-4">
+        <p class="text-xs text-slate-600">Authorized personnel only. Enter administrator credentials to manage emergency requests, hospitals, and services.</p>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Admin Username *</label>
+          <input id="adminUsernameInput" type="text" value="admin" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Admin Password *</label>
+          <input id="adminPasswordInput" type="password" value="admin123" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+        </div>
+        <div id="adminLoginError" class="hidden text-xs text-crimson-600 bg-crimson-50 p-2.5 rounded-xl font-medium"></div>
+        <div class="flex gap-2">
+          <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm py-2.5 rounded-xl transition cursor-pointer">
+            Login to Admin Dashboard
+          </button>
+          <button type="button" onclick="quickDemoAdminLogin()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs px-3.5 py-2.5 rounded-xl transition cursor-pointer">
+            1-Click Demo
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-500 text-center">Demo Credentials: <strong>admin</strong> / <strong>admin123</strong></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer Crediting Authors & Academic Context -->
+  <footer class="bg-navy-900 text-slate-400 border-t border-slate-800 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
+      <div class="text-center md:text-left">
+        <p class="text-white font-bold">Emergency Help & Rapid Response System</p>
+        <p class="mt-0.5">Developed by <strong class="text-slate-200">Shaurya Pratap Yadav & Ambar Raj</strong> • B.Tech Computer Science and Engineering (Section 12)</p>
+        <p class="text-slate-500 mt-0.5">School of Computing Science and Engineering, Galgotias University • Academic Year 2026–2027</p>
+      </div>
+      <div class="text-center md:text-right max-w-md">
+        <p class="text-amber-300/90 font-medium">Academic Prototype Notice</p>
+        <p class="text-slate-500 mt-0.5">Demonstrates SDLC, SRS Functional & Non-Functional Requirements, Three-Tier Architecture & Testing Strategy. Not connected to live government dispatch.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== APPLICATION LOGIC ==================== -->
+  <script>
+    /**
+     * Storage Keys for Persistent State Simulation (Three-Tier Data Layer)
+     */
+    const STORAGE_KEYS = {
+      USERS: 'ehrs_users_v1',
+      CONTACTS: 'ehrs_contacts_v1',
+      REQUESTS: 'ehrs_requests_v1',
+      HOSPITALS: 'ehrs_hospitals_v1',
+      SERVICES: 'ehrs_services_v1',
+      REPORTS: 'ehrs_reports_v1',
+      SESSION: 'ehrs_session_v1',
+    };
+
+    /**
+     * Pre-populated Indian / Delhi NCR & Greater Noida Seed Data
+     */
+    const SEED_DATA = {
+      users: [
+        {
+          user_id: 101,
+          name: 'Ambar Raj',
+          email: 'ambar.raj@galgotias.edu.in',
+          mobile: '9876543210',
+          password: 'ambar123',
+          address: 'Knowledge Park II, Greater Noida, Uttar Pradesh 201310',
+          created_at: '2026-09-12 10:15:00',
+        },
+        {
+          user_id: 102,
+          name: 'Shaurya Pratap Yadav',
+          email: 'shaurya.yadav@galgotias.edu.in',
+          mobile: '9811223344',
+          password: 'shaurya123',
+          address: 'Alpha I Commercial Belt, Greater Noida, Uttar Pradesh 201308',
+          created_at: '2026-09-12 10:20:00',
+        },
+      ],
+      contacts: [
+        {
+          contact_id: 1,
+          user_id: 101,
+          name: 'Shaurya Pratap Yadav',
+          relationship: 'Project Partner / Friend',
+          mobile: '9811223344',
+        },
+        {
+          contact_id: 2,
+          user_id: 101,
+          name: 'Rajesh Kumar (Father)',
+          relationship: 'Family / Parent',
+          mobile: '9910045678',
+        },
+        {
+          contact_id: 3,
+          user_id: 101,
+          name: 'Galgotias Campus Security Desk',
+          relationship: 'University Warden',
+          mobile: '0120437000',
+        },
+      ],
+      services: [
+        {
+          service_id: 1,
+          service_name: 'National Emergency Helpline',
+          contact_number: '112',
+          description: 'Unified pan-India emergency response for Police, Fire, and Medical dispatch.',
+        },
+        {
+          service_id: 2,
+          service_name: 'Police Control Room',
+          contact_number: '100',
+          description: 'Immediate law enforcement, crime reporting, and public safety assistance.',
+        },
+        {
+          service_id: 3,
+          service_name: 'Ambulance / Medical Emergency',
+          contact_number: '108',
+          description: '24/7 emergency medical transport and paramedic trauma support.',
+        },
+        {
+          service_id: 4,
+          service_name: 'Fire Brigade Service',
+          contact_number: '101',
+          description: 'Fire rescue, hazardous material containment, and structural emergencies.',
+        },
+        {
+          service_id: 5,
+          service_name: 'Women Helpline',
+          contact_number: '1091',
+          description: 'Dedicated rapid safety assistance and support for women in distress.',
+        },
+        {
+          service_id: 6,
+          service_name: 'Cyber Crime Helpline',
+          contact_number: '1930',
+          description: 'National cyber fraud reporting and immediate financial transaction freeze.',
+        },
+      ],
+      hospitals: [
+        {
+          hospital_id: 1,
+          hospital_name: 'Yatharth Super Speciality Hospital',
+          address: 'Plot No. 32, Omega I, Greater Noida, Uttar Pradesh 201308',
+          phone: '0120-2323232',
+          services: '24/7 Trauma, ICU, Ambulance, Cardiac, Neurology',
+        },
+        {
+          hospital_id: 2,
+          hospital_name: 'Sharda Hospital (School of Medical Sciences)',
+          address: 'Plot No. 32-34, Knowledge Park III, Greater Noida, UP 201306',
+          phone: '0120-2329700',
+          services: '24/7 Trauma, Emergency Ward, Ambulance, Blood Bank',
+        },
+        {
+          hospital_id: 3,
+          hospital_name: 'Kailash Hospital & Heart Institute',
+          address: 'H-33, Sector 27, Noida, Uttar Pradesh 201301',
+          phone: '0120-2444444',
+          services: 'Cardiac Emergency, ICU, 24/7 Ambulance, Burn Unit',
+        },
+        {
+          hospital_id: 4,
+          hospital_name: 'Apollo Spectra Hospital',
+          address: 'Plot 13, Sector 82, Noida / Greater Noida Expressway, UP',
+          phone: '1860-500-2244',
+          services: 'Emergency Surgery, ICU, Ambulance',
+        },
+        {
+          hospital_id: 5,
+          hospital_name: 'AIIMS Trauma Centre (JPNATC)',
+          address: 'Ring Road, Safdarjung Enclave, New Delhi 110029',
+          phone: '011-26588500',
+          services: 'Level-1 Trauma, ICU, Neurosurgery, 24/7 Ambulance',
+        },
+      ],
+      requests: [
+        {
+          request_id: 'SOS-2026-101',
+          user_id: 101,
+          user_name: 'Ambar Raj',
+          emergency_type: 'Ambulance / Medical (102 / 108)',
+          description: 'Student fainted near Knowledge Park II Metro Station Gate 2.',
+          latitude: '28.3669',
+          longitude: '77.5413',
+          location_label: '28.3669° N, 77.5413° E (Knowledge Park II)',
+          status: 'Dispatched',
+          created_at: '2026-11-23 13:45:10',
+        },
+        {
+          request_id: 'SOS-2026-102',
+          user_id: 102,
+          user_name: 'Shaurya Pratap Yadav',
+          emergency_type: 'Police (112 / 100)',
+          description: 'Minor collision blocking service lane near Pari Chowk roundabout.',
+          latitude: '28.4651',
+          longitude: '77.5030',
+          location_label: '28.4651° N, 77.5030° E (Pari Chowk)',
+          status: 'Resolved',
+          created_at: '2026-11-22 19:20:44',
+        },
+      ],
+      reports: [
+        {
+          report_id: 'RPT-401',
+          user_name: 'Ambar Raj',
+          category: 'Electrical / Fire Hazard',
+          severity: 'High',
+          location: 'Near Sector 17A Yamuna Expressway Service Road',
+          description: 'Exposed live transformer cables sparking near pedestrian walkway.',
+          status: 'Under Review',
+          created_at: '2026-11-23 11:10:00',
+        },
+      ],
+    };
+
+    const SOS_CATEGORIES = [
+      { id: 'Police (112 / 100)', label: 'Police', code: '112 / 100', color: 'border-blue-600 bg-blue-50 text-blue-900', icon: '🚓' },
+      { id: 'Ambulance / Medical (102 / 108)', label: 'Ambulance / Medical', code: '102 / 108', color: 'border-crimson-600 bg-crimson-50 text-crimson-900', icon: '🚑' },
+      { id: 'Fire Service (101)', label: 'Fire Service', code: '101', color: 'border-orange-600 bg-orange-50 text-orange-900', icon: '🚒' },
+      { id: 'Disaster / Accident', label: 'Disaster / Accident', code: '112', color: 'border-amber-600 bg-amber-50 text-amber-900', icon: '⚠️' },
+      { id: 'Women / Citizen Safety (1091)', label: 'Women / Safety', code: '1091', color: 'border-purple-600 bg-purple-50 text-purple-900', icon: '🛡️' },
+    ];
+
+    /**
+     * Application State
+     */
+    let state = {
+      users: [],
+      contacts: [],
+      requests: [],
+      hospitals: [],
+      services: [],
+      reports: [],
+      session: {
+        role: 'citizen', // 'citizen' | 'guest' | 'admin'
+        userId: 101,
+        userName: 'Ambar Raj',
+      },
+      selectedSosCategory: 'Ambulance / Medical (102 / 108)',
+      capturedCoords: null, // { lat: '28.3669', lng: '77.5413' }
+      activeCitizenTab: 'requests',
+      activeAdminTab: 'manageRequests',
+    };
+
+    /**
+     * Initialize Application on Window Load
+     */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadOrSeedState();
+      renderSosCategorySelector();
+      syncSessionUI();
+      renderAllCitizenViews();
+      renderAllAdminViews();
+    });
+
+    function loadOrSeedState() {
+      state.users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || SEED_DATA.users;
+      state.contacts = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONTACTS)) || SEED_DATA.contacts;
+      state.requests = JSON.parse(localStorage.getItem(STORAGE_KEYS.REQUESTS)) || SEED_DATA.requests;
+      state.hospitals = JSON.parse(localStorage.getItem(STORAGE_KEYS.HOSPITALS)) || SEED_DATA.hospitals;
+      state.services = JSON.parse(localStorage.getItem(STORAGE_KEYS.SERVICES)) || SEED_DATA.services;
+      state.reports = JSON.parse(localStorage.getItem(STORAGE_KEYS.REPORTS)) || SEED_DATA.reports;
+
+      const savedSession = JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSION));
+      if (savedSession) {
+        state.session = savedSession;
+      }
+      persistAll();
+    }
+
+    function persistAll() {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(state.users));
+      localStorage.setItem(STORAGE_KEYS.CONTACTS, JSON.stringify(state.contacts));
+      localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(state.requests));
+      localStorage.setItem(STORAGE_KEYS.HOSPITALS, JSON.stringify(state.hospitals));
+      localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(state.services));
+      localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(state.reports));
+      localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(state.session));
+    }
+
+    /**
+     * Non-blocking Toast Notification Helper (Replaces alert())
+     */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-700 text-white border-emerald-500',
+        error: 'bg-crimson-600 text-white border-red-400',
+        warning: 'bg-amber-600 text-white border-amber-400',
+        info: 'bg-navy-900 text-white border-slate-700',
+      };
+      toast.className = `pointer-events-auto border rounded-xl px-4 py-3 shadow-xl text-xs font-semibold flex items-center justify-between gap-3 transition-all ${colors[type] || colors.info}`;
+      toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()" class="opacity-80 hover:opacity-100 font-bold text-sm cursor-pointer">&times;</button>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+      }, 4200);
+    }
+
+    /**
+     * Session & Role Management (FR-02, FR-13, FR-20, TC12)
+     */
+    function syncSessionUI() {
+      const indicator = document.getElementById('sessionIndicator');
+      const label = document.getElementById('sessionLabel');
+      const dot = document.getElementById('roleDot');
+      const btnLogout = document.getElementById('btnLogout');
+      const citizenView = document.getElementById('citizenPortalView');
+      const adminView = document.getElementById('adminPortalView');
+      const adminDenied = document.getElementById('adminAccessDenied');
+      const adminContent = document.getElementById('adminAuthenticatedContent');
+
+      indicator.classList.remove('hidden');
+
+      if (state.session.role === 'admin') {
+        label.textContent = 'Admin: system_admin';
+        dot.className = 'w-2 h-2 rounded-full bg-indigo-400';
+        btnLogout.classList.remove('hidden');
+        citizenView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        adminDenied.classList.add('hidden');
+        adminContent.classList.remove('hidden');
+        renderAllAdminViews();
+      } else if (state.session.role === 'citizen') {
+        label.textContent = `Citizen: ${state.session.userName}`;
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        btnLogout.classList.remove('hidden');
+        adminView.classList.add('hidden');
+        citizenView.classList.remove('hidden');
+        populateProfileForm();
+      } else {
+        label.textContent = 'Guest Session';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        btnLogout.classList.add('hidden');
+        adminView.classList.add('hidden');
+        citizenView.classList.remove('hidden');
+        populateProfileForm();
+      }
+    }
+
+    function handleAdminNavClick() {
+      if (state.session.role === 'admin') {
+        syncSessionUI();
+      } else {
+        // Show Access Denied view behind/alongside Admin Login modal (TC12 compliance)
+        document.getElementById('citizenPortalView').classList.add('hidden');
+        document.getElementById('adminPortalView').classList.remove('hidden');
+        document.getElementById('adminAccessDenied').classList.remove('hidden');
+        document.getElementById('adminAuthenticatedContent').classList.add('hidden');
+        openAdminLoginModal();
+      }
+    }
+
+    function switchToCitizenView() {
+      if (state.session.role === 'admin') {
+        // Return to default citizen view while preserving user data
+        const defaultUser = state.users[0];
+        state.session = { role: 'citizen', userId: defaultUser.user_id, userName: defaultUser.name };
+        persistAll();
+      }
+      syncSessionUI();
+      renderAllCitizenViews();
+    }
+
+    function logoutSession() {
+      state.session = { role: 'guest', userId: null, userName: 'Guest' };
+      persistAll();
+      syncSessionUI();
+      renderAllCitizenViews();
+      showToast('Session ended securely (FR-20). Switched to Guest mode.', 'info');
+    }
+
+    /**
+     * SOS Module: Category Selector, Geolocation (FR-09) & Confirmation Modal (UC-03)
+     */
+    function renderSosCategorySelector() {
+      const grid = document.getElementById('sosCategoryGrid');
+      grid.innerHTML = SOS_CATEGORIES.map((cat) => {
+        const isSelected = state.selectedSosCategory === cat.id;
+        return `
+          <button type="button" onclick="selectSosCategory('${cat.id}')"
+            class="text-left p-3 rounded-xl border-2 transition cursor-pointer flex flex-col justify-between ${
+              isSelected
+                ? 'border-crimson-600 bg-crimson-50 shadow-xs ring-2 ring-crimson-600/20'
+                : 'border-slate-200 bg-white hover:border-slate-300'
+            }">
+            <div class="flex items-center justify-between">
+              <span class="text-lg">${cat.icon}</span>
+              <span class="text-[11px] font-extrabold px-1.5 py-0.5 rounded bg-slate-900 text-white">${cat.code}</span>
+            </div>
+            <span class="text-xs font-bold text-slate-900 mt-2 leading-tight">${cat.label}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectSosCategory(categoryId) {
+      state.selectedSosCategory = categoryId;
+      renderSosCategorySelector();
+    }
+
+    function scrollToSOS() {
+      if (state.session.role === 'admin') {
+        switchToCitizenView();
+      }
+      document.getElementById('sosHeroSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function captureUserLocation() {
+      const badge = document.getElementById('gpsStatusBadge');
+      const coordDisplay = document.getElementById('coordDisplay');
+      const permText = document.getElementById('permStateText');
+
+      badge.textContent = 'Requesting GPS Permission...';
+      permText.textContent = 'Requesting browser permission...';
+
+      if (!navigator.geolocation) {
+        badge.textContent = 'Geolocation Unsupported';
+        permText.textContent = 'Fallback to manual address';
+        showToast('Geolocation not supported by browser. Using manual address fallback.', 'warning');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude.toFixed(4);
+          const lng = position.coords.longitude.toFixed(4);
+          state.capturedCoords = { lat, lng };
+          coordDisplay.textContent = `${lat}° N, ${lng}° E`;
+          permText.textContent = 'Permission Granted (FR-09)';
+          permText.className = 'font-semibold text-emerald-700';
+          badge.textContent = `GPS Active: ${lat}° N, ${lng}° E`;
+          badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950 border border-emerald-700 text-emerald-300 font-medium';
+          showToast('Live GPS coordinates captured and attached to SOS.', 'success');
+        },
+        () => {
+          // Graceful fallback per Section 15.3 Error Handling & TC10
+          state.capturedCoords = null;
+          coordDisplay.textContent = 'Permission Denied (Manual Fallback)';
+          permText.textContent = 'Denied — Continuing with manual location';
+          permText.className = 'font-semibold text-amber-700';
+          badge.textContent = 'GPS Denied • Manual Fallback Active';
+          showToast('Location permission was not granted; continuing with manual location entry (TC10).', 'warning');
+        },
+        { timeout: 6000 }
+      );
+    }
+
+    function initiateSOSConfirmation() {
+      // Check if user is logged in (FR-04: logged-in user creates SOS request)
+      if (state.session.role === 'guest') {
+        showToast('Please login or register as a Citizen before triggering SOS (FR-04).', 'error');
+        openAuthModal('login');
+        return;
+      }
+
+      const desc = document.getElementById('sosDescription').value.trim() || 'Immediate emergency assistance requested via SOS button.';
+      const manualLoc = document.getElementById('manualLocationInput').value.trim() || 'Greater Noida, UP';
+      const locString = state.capturedCoords
+        ? `${state.capturedCoords.lat}° N, ${state.capturedCoords.lng}° E (${manualLoc})`
+        : `${manualLoc} (Manual Location)`;
+
+      document.getElementById('confirmSosType').textContent = state.selectedSosCategory;
+      document.getElementById('confirmSosUser').textContent = state.session.userName;
+      document.getElementById('confirmSosLoc').textContent = locString;
+      document.getElementById('confirmSosDesc').textContent = desc;
+
+      document.getElementById('sosConfirmModal').classList.remove('hidden');
+    }
+
+    function cancelSOSConfirmation() {
+      document.getElementById('sosConfirmModal').classList.add('hidden');
+      showToast('SOS dispatch cancelled. No emergency request was created (TC06).', 'info');
+    }
+
+    function confirmAndDispatchSOS() {
+      const desc = document.getElementById('sosDescription').value.trim() || 'Immediate emergency assistance requested via SOS button.';
+      const manualLoc = document.getElementById('manualLocationInput').value.trim() || 'Greater Noida, UP';
+      const locString = state.capturedCoords
+        ? `${state.capturedCoords.lat}° N, ${state.capturedCoords.lng}° E (${manualLoc})`
+        : `${manualLoc} (Manual)`;
+
+      const newReq = {
+        request_id: `SOS-2026-${Math.floor(100 + Math.random() * 900)}`,
+        user_id: state.session.userId,
+        user_name: state.session.userName,
+        emergency_type: state.selectedSosCategory,
+        description: desc,
+        latitude: state.capturedCoords ? state.capturedCoords.lat : '28.3669',
+        longitude: state.capturedCoords ? state.capturedCoords.lng : '77.5413',
+        location_label: locString,
+        status: 'Pending',
+        created_at: new Date().toLocaleString('en-IN', { hour12: false }),
+      };
+
+      state.requests.unshift(newReq);
+      persistAll();
+
+      document.getElementById('sosConfirmModal').classList.add('hidden');
+      document.getElementById('sosDescription').value = '';
+
+      switchCitizenTab('requests');
+      renderAllCitizenViews();
+      renderAllAdminViews();
+      showToast(`SOS Request ${newReq.request_id} dispatched! Status: Pending (TC05).`, 'success');
+    }
+
+    /**
+     * Citizen Tabs Navigation & Rendering
+     */
+    function switchCitizenTab(tabKey) {
+      state.activeCitizenTab = tabKey;
+      const tabs = ['requests', 'services', 'hospitals', 'contacts', 'reports', 'profile'];
+      tabs.forEach((t) => {
+        const btn = document.getElementById(`tab-${t}`);
+        const panel = document.getElementById(`panel-${t}`);
+        if (t === tabKey) {
+          btn.classList.add('tab-active');
+          panel.classList.remove('hidden');
+        } else {
+          btn.classList.remove('tab-active');
+          panel.classList.add('hidden');
+        }
+      });
+    }
+
+    function renderAllCitizenViews() {
+      renderCitizenRequests();
+      renderServicesDirectory();
+      renderHospitals();
+      renderTrustedContacts();
+      renderIncidentReports();
+      populateProfileForm();
+    }
+
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'Pending':
+          return 'bg-amber-100 text-amber-800 border-amber-300';
+        case 'Dispatched':
+          return 'bg-blue-100 text-blue-800 border-blue-300';
+        case 'In Progress':
+          return 'bg-indigo-100 text-indigo-800 border-indigo-300';
+        case 'Resolved':
+          return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+        case 'Cancelled':
+          return 'bg-slate-200 text-slate-600 border-slate-300';
+        default:
+          return 'bg-slate-100 text-slate-700 border-slate-300';
+      }
+    }
+
+    function renderCitizenRequests() {
+      const listEl = document.getElementById('citizenRequestsList');
+      const filterVal = document.getElementById('filterRequestStatus').value;
+
+      // Filter requests for current logged-in citizen (or show all demo requests if guest)
+      let userReqs = state.session.role === 'citizen'
+        ? state.requests.filter((r) => r.user_id === state.session.userId)
+        : state.requests;
+
+      document.getElementById('badgeRequestCount').textContent = userReqs.length;
+
+      if (filterVal !== 'ALL') {
+        userReqs = userReqs.filter((r) => r.status === filterVal);
+      }
+
+      if (userReqs.length === 0) {
+        listEl.innerHTML = `
+          <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-8 text-center">
+            <p class="text-sm font-bold text-slate-700">No emergency requests found for the selected filter.</p>
+            <p class="text-xs text-slate-500 mt-1">Use the SOS Dispatch panel above if you need emergency assistance.</p>
+          </div>`;
+        return;
+      }
+
+      listEl.innerHTML = userReqs.map((req) => `
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between space-y-3">
+          <div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-mono text-xs font-bold text-slate-500">${req.request_id}</span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusBadgeClass(req.status)}">
+                ${req.status}
+              </span>
+            </div>
+            <h4 class="text-base font-extrabold text-navy-900 mt-1.5">${req.emergency_type}</h4>
+            <p class="text-xs text-slate-600 mt-1">${req.description}</p>
+          </div>
+
+          <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 text-xs space-y-1">
+            <div class="flex justify-between gap-2">
+              <span class="text-slate-500">Location:</span>
+              <span class="font-medium text-slate-800 text-right">${req.location_label}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Submitted:</span>
+              <span class="font-mono text-slate-700">${req.created_at}</span>
+            </div>
+          </div>
+
+          ${
+            req.status === 'Pending'
+              ? `<div class="flex justify-end">
+                  <button onclick="cancelUserRequest('${req.request_id}')" class="text-xs font-semibold text-crimson-600 hover:text-crimson-800 underline cursor-pointer">
+                    Cancel Request
+                  </button>
+                </div>`
+              : ''
+          }
+        </div>
+      `).join('');
+    }
+
+    function cancelUserRequest(reqId) {
+      const idx = state.requests.findIndex((r) => r.request_id === reqId);
+      if (idx !== -1) {
+        state.requests[idx].status = 'Cancelled';
+        persistAll();
+        renderCitizenRequests();
+        renderAllAdminViews();
+        showToast(`Request ${reqId} marked as Cancelled.`, 'info');
+      }
+    }
+
+    function renderServicesDirectory() {
+      const grid = document.getElementById('servicesDirectoryGrid');
+      grid.innerHTML = state.services.map((svc) => `
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="px-2.5 py-1 rounded-lg bg-navy-900 text-white font-mono text-sm font-extrabold">
+                ${svc.contact_number}
+              </span>
+              <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">24/7 Active</span>
+            </div>
+            <h4 class="text-base font-bold text-navy-900 mt-3">${svc.service_name}</h4>
+            <p class="text-xs text-slate-600 mt-1 leading-relaxed">${svc.description}</p>
+          </div>
+          <div class="flex gap-2 pt-2 border-t border-slate-100">
+            <a href="tel:${svc.contact_number}" class="flex-1 text-center bg-crimson-600 hover:bg-crimson-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition">
+              Call ${svc.contact_number}
+            </a>
+            <button type="button" onclick="copyTextToClipboard('${svc.contact_number}', '${svc.service_name}')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold py-2 px-3 rounded-xl transition cursor-pointer">
+              Copy
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function copyTextToClipboard(text, label) {
+      const tempInput = document.createElement('input');
+      tempInput.value = text;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      showToast(`Copied ${label} number (${text}) to clipboard.`, 'success');
+    }
+
+    function renderHospitals() {
+      const grid = document.getElementById('hospitalsGrid');
+      const query = document.getElementById('hospitalSearchInput').value.trim().toLowerCase();
+      const serviceFilter = document.getElementById('hospitalFilterService').value;
+
+      const filtered = state.hospitals.filter((h) => {
+        const matchesQuery =
+          !query ||
+          h.hospital_name.toLowerCase().includes(query) ||
+          h.address.toLowerCase().includes(query) ||
+          h.services.toLowerCase().includes(query);
+        const matchesService =
+          serviceFilter === 'ALL' || h.services.toLowerCase().includes(serviceFilter.toLowerCase());
+        return matchesQuery && matchesService;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full bg-white rounded-2xl border border-slate-200 p-8 text-center">
+            <p class="text-sm font-bold text-slate-700">No matching hospital records found (UC-04).</p>
+            <p class="text-xs text-slate-500 mt-1">Try clearing the search query or selecting "All Facilities".</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map((h) => {
+        const tags = h.services.split(',').map((s) => s.trim());
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <h4 class="text-base font-extrabold text-navy-900">${h.hospital_name}</h4>
+                <span class="shrink-0 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
+                  Emergency Open
+                </span>
+              </div>
+              <p class="text-xs text-slate-600 mt-1.5 flex items-start gap-1.5">
+                <span class="font-semibold text-slate-800">Address:</span>
+                <span>${h.address}</span>
+              </p>
+              <div class="flex flex-wrap gap-1.5 mt-3">
+                ${tags.map((tag) => `<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold">${tag}</span>`).join('')}
+              </div>
+            </div>
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+              <span class="font-mono text-xs font-bold text-navy-900">${h.phone}</span>
+              <div class="flex gap-2">
+                <button type="button" onclick="copyTextToClipboard('${h.phone}', '${h.hospital_name}')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer">
+                  Copy Phone
+                </button>
+                <a href="tel:${h.phone}" class="bg-navy-900 hover:bg-navy-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl">
+                  Call Desk
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Trusted Emergency Contacts CRUD (FR-08 / UC-05 / TC07)
+     */
+    function renderTrustedContacts() {
+      const grid = document.getElementById('contactsListGrid');
+      const userContacts = state.session.role === 'citizen'
+        ? state.contacts.filter((c) => c.user_id === state.session.userId)
+        : state.contacts;
+
+      document.getElementById('contactCountLabel').textContent = `${userContacts.length} contact(s)`;
+
+      if (userContacts.length === 0) {
+        grid.innerHTML = `<div class="col-span-full bg-white rounded-2xl border border-slate-200 p-6 text-center text-xs text-slate-500">No trusted contacts added yet.</div>`;
+        return;
+      }
+
+      grid.innerHTML = userContacts.map((c) => `
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col justify-between space-y-3">
+          <div>
+            <span class="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-bold">${c.relationship}</span>
+            <h4 class="text-sm font-extrabold text-navy-900 mt-1.5">${c.name}</h4>
+            <p class="font-mono text-xs text-slate-600 mt-0.5">${c.mobile}</p>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+            <a href="tel:${c.mobile}" class="font-bold text-emerald-700 hover:underline">Call Now</a>
+            <div class="flex gap-2">
+              <button type="button" onclick="editTrustedContact(${c.contact_id})" class="font-semibold text-indigo-600 hover:underline cursor-pointer">Edit</button>
+              <button type="button" onclick="deleteTrustedContact(${c.contact_id})" class="font-semibold text-crimson-600 hover:underline cursor-pointer">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function saveTrustedContact(e) {
+      e.preventDefault();
+      const errBox = document.getElementById('contactFormError');
+      errBox.classList.add('hidden');
+
+      if (state.session.role !== 'citizen') {
+        errBox.textContent = 'Please log in as a Citizen to save trusted contacts.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      const editId = document.getElementById('editContactId').value;
+      const name = document.getElementById('contactName').value.trim();
+      const relationship = document.getElementById('contactRelation').value;
+      const mobile = document.getElementById('contactMobile').value.trim();
+
+      // Boundary-value & format validation (10-digit mobile)
+      if (!/^\d{10}$/.test(mobile)) {
+        errBox.textContent = 'Invalid mobile number. Please enter a valid 10-digit number (UC-05).';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      if (editId) {
+        const idx = state.contacts.findIndex((c) => c.contact_id === Number(editId));
+        if (idx !== -1) {
+          state.contacts[idx] = { ...state.contacts[idx], name, relationship, mobile };
+          showToast('Trusted contact updated successfully.', 'success');
+        }
+      } else {
+        state.contacts.push({
+          contact_id: Date.now(),
+          user_id: state.session.userId,
+          name,
+          relationship,
+          mobile,
+        });
+        showToast('Trusted emergency contact saved (TC07).', 'success');
+      }
+
+      persistAll();
+      resetContactForm();
+      renderTrustedContacts();
+    }
+
+    function editTrustedContact(contactId) {
+      const contact = state.contacts.find((c) => c.contact_id === contactId);
+      if (!contact) return;
+      document.getElementById('editContactId').value = contact.contact_id;
+      document.getElementById('contactName').value = contact.name;
+      document.getElementById('contactRelation').value = contact.relationship;
+      document.getElementById('contactMobile').value = contact.mobile;
+      document.getElementById('contactFormTitle').textContent = 'Edit Trusted Contact';
+      document.getElementById('btnCancelContactEdit').classList.remove('hidden');
+    }
+
+    function deleteTrustedContact(contactId) {
+      state.contacts = state.contacts.filter((c) => c.contact_id !== contactId);
+      persistAll();
+      renderTrustedContacts();
+      showToast('Emergency contact removed.', 'info');
+    }
+
+    function resetContactForm() {
+      document.getElementById('editContactId').value = '';
+      document.getElementById('contactForm').reset();
+      document.getElementById('contactFormTitle').textContent = 'Add Trusted Emergency Contact';
+      document.getElementById('btnCancelContactEdit').classList.add('hidden');
+      document.getElementById('contactFormError').classList.add('hidden');
+    }
+
+    /**
+     * Incident Reporting Module (FR-11)
+     */
+    function submitIncidentReport(e) {
+      e.preventDefault();
+      const category = document.getElementById('reportCategory').value;
+      const severity = document.getElementById('reportSeverity').value;
+      const location = document.getElementById('reportLocation').value.trim();
+      const description = document.getElementById('reportDescription').value.trim();
+
+      const newReport = {
+        report_id: `RPT-${Math.floor(400 + Math.random() * 599)}`,
+        user_name: state.session.userName || 'Guest Citizen',
+        category,
+        severity,
+        location,
+        description,
+        status: 'Submitted',
+        created_at: new Date().toLocaleString('en-IN', { hour12: false }),
+      };
+
+      state.reports.unshift(newReport);
+      persistAll();
+      document.getElementById('incidentReportForm').reset();
+      renderIncidentReports();
+      renderAllAdminViews();
+      showToast(`Incident Report ${newReport.report_id} submitted for review (FR-11).`, 'success');
+    }
+
+    function renderIncidentReports() {
+      const container = document.getElementById('incidentReportsList');
+      if (state.reports.length === 0) {
+        container.innerHTML = `<div class="bg-white rounded-2xl border border-slate-200 p-6 text-center text-xs text-slate-500">No incident reports logged yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = state.reports.map((rep) => {
+        const sevColor =
+          rep.severity === 'High'
+            ? 'bg-crimson-50 text-crimson-700 border-crimson-200'
+            : rep.severity === 'Medium'
+            ? 'bg-amber-50 text-amber-800 border-amber-200'
+            : 'bg-slate-100 text-slate-700 border-slate-200';
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="font-mono text-xs font-bold text-slate-500">${rep.report_id}</span>
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${sevColor}">${rep.severity} Severity</span>
+              </div>
+              <span class="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">${rep.status}</span>
+            </div>
+            <h4 class="text-sm font-extrabold text-navy-900">${rep.category}</h4>
+            <p class="text-xs text-slate-600">${rep.description}</p>
+            <div class="text-[11px] text-slate-500 flex flex-wrap justify-between pt-2 border-t border-slate-100">
+              <span>Location: <strong class="text-slate-700">${rep.location}</strong></span>
+              <span>Reported by ${rep.user_name} • ${rep.created_at}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Profile & Citizen Auth (FR-01, FR-02, FR-03 / TC01–TC04)
+     */
+    function populateProfileForm() {
+      const guestNotice = document.getElementById('guestProfileNotice');
+      const profileCard = document.getElementById('userProfileCard');
+
+      if (state.session.role !== 'citizen') {
+        guestNotice.classList.remove('hidden');
+        profileCard.classList.add('hidden');
+        return;
+      }
+
+      guestNotice.classList.add('hidden');
+      profileCard.classList.remove('hidden');
+
+      const user = state.users.find((u) => u.user_id === state.session.userId);
+      if (user) {
+        document.getElementById('profName').value = user.name;
+        document.getElementById('profEmail').value = user.email;
+        document.getElementById('profMobile').value = user.mobile;
+        document.getElementById('profAddress').value = user.address;
+        document.getElementById('profCreated').value = user.created_at;
+      }
+    }
+
+    function updateUserProfile(e) {
+      e.preventDefault();
+      const idx = state.users.findIndex((u) => u.user_id === state.session.userId);
+      if (idx === -1) return;
+
+      const name = document.getElementById('profName').value.trim();
+      const email = document.getElementById('profEmail').value.trim();
+      const mobile = document.getElementById('profMobile').value.trim();
+      const address = document.getElementById('profAddress').value.trim();
+
+      if (!/^\d{10}$/.test(mobile)) {
+        showToast('Mobile number must be 10 digits.', 'error');
+        return;
+      }
+
+      state.users[idx] = { ...state.users[idx], name, email, mobile, address };
+      state.session.userName = name;
+      persistAll();
+      syncSessionUI();
+      renderAllAdminViews();
+      showToast('Citizen profile updated successfully (FR-03).', 'success');
+    }
+
+    function openAuthModal(mode = 'login') {
+      setAuthMode(mode);
+      document.getElementById('citizenAuthModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('citizenAuthModal').classList.add('hidden');
+      document.getElementById('loginErrorMsg').classList.add('hidden');
+      document.getElementById('registerErrorMsg').classList.add('hidden');
+    }
+
+    function setAuthMode(mode) {
+      const loginForm = document.getElementById('citizenLoginForm');
+      const regForm = document.getElementById('citizenRegisterForm');
+      const btnLogin = document.getElementById('switchLoginBtn');
+      const btnReg = document.getElementById('switchRegBtn');
+
+      if (mode === 'login') {
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+        btnLogin.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-navy-900 shadow-xs cursor-pointer';
+        btnReg.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 cursor-pointer';
+      } else {
+        loginForm.classList.add('hidden');
+        regForm.classList.remove('hidden');
+        btnReg.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-navy-900 shadow-xs cursor-pointer';
+        btnLogin.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 cursor-pointer';
+      }
+    }
+
+    function handleCitizenLogin(e) {
+      e.preventDefault();
+      const idVal = document.getElementById('loginIdentifier').value.trim().toLowerCase();
+      const passVal = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginErrorMsg');
+
+      const matched = state.users.find(
+        (u) => (u.email.toLowerCase() === idVal || u.mobile === idVal) && u.password === passVal
+      );
+
+      if (!matched) {
+        // Section 15.3 Error Handling & TC04
+        errEl.textContent = 'Invalid credentials. Please check your email/mobile and password (TC04).';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      state.session = { role: 'citizen', userId: matched.user_id, userName: matched.name };
+      persistAll();
+      closeAuthModal();
+      syncSessionUI();
+      renderAllCitizenViews();
+      showToast(`Welcome back, ${matched.name}! Session active (TC03).`, 'success');
+    }
+
+    function quickDemoCitizenLogin() {
+      const demo = state.users[0];
+      state.session = { role: 'citizen', userId: demo.user_id, userName: demo.name };
+      persistAll();
+      closeAuthModal();
+      syncSessionUI();
+      renderAllCitizenViews();
+      showToast(`Logged in as ${demo.name}.`, 'success');
+    }
+
+    function handleCitizenRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim().toLowerCase();
+      const mobile = document.getElementById('regMobile').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const address = document.getElementById('regAddress').value.trim();
+      const errEl = document.getElementById('registerErrorMsg');
+
+      if (!name || !email || !mobile || !password || !address) {
+        errEl.textContent = 'Please complete all required fields (TC02).';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      if (!/^\d{10}$/.test(mobile)) {
+        errEl.textContent = 'Mobile number must be 10 digits.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      if (password.length < 6) {
+        errEl.textContent = 'Password must be at least 6 characters.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const duplicate = state.users.some((u) => u.email.toLowerCase() === email || u.mobile === mobile);
+      if (duplicate) {
+        errEl.textContent = 'Account already exists with this email or mobile (Section 15.3).';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const newUser = {
+        user_id: Math.floor(200 + Math.random() * 799),
+        name,
+        email,
+        mobile,
+        password,
+        address,
+        created_at: new Date().toLocaleString('en-IN', { hour12: false }),
+      };
+
+      state.users.push(newUser);
+      state.session = { role: 'citizen', userId: newUser.user_id, userName: newUser.name };
+      persistAll();
+      closeAuthModal();
+      syncSessionUI();
+      renderAllCitizenViews();
+      renderAllAdminViews();
+      showToast(`Account created for ${newUser.name}! Logged in (TC01).`, 'success');
+    }
+
+    /**
+     * Administrator Login & Dashboard Management (FR-13 to FR-19)
+     */
+    function openAdminLoginModal() {
+      document.getElementById('adminLoginModal').classList.remove('hidden');
+    }
+
+    function closeAdminLoginModal() {
+      document.getElementById('adminLoginModal').classList.add('hidden');
+      document.getElementById('adminLoginError').classList.add('hidden');
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('adminUsernameInput').value.trim();
+      const pass = document.getElementById('adminPasswordInput').value;
+      const err = document.getElementById('adminLoginError');
+
+      if (user === 'admin' && pass === 'admin123') {
+        state.session = { role: 'admin', userId: 1, userName: 'Administrator' };
+        persistAll();
+        closeAdminLoginModal();
+        syncSessionUI();
+        showToast('Administrator authenticated successfully (TC11).', 'success');
+      } else {
+        err.textContent = 'Invalid administrator credentials. Use admin / admin123.';
+        err.classList.remove('hidden');
+      }
+    }
+
+    function quickDemoAdminLogin() {
+      state.session = { role: 'admin', userId: 1, userName: 'Administrator' };
+      persistAll();
+      closeAdminLoginModal();
+      syncSessionUI();
+      showToast('Switched to Administrator Dashboard.', 'success');
+    }
+
+    function switchAdminTab(tabKey) {
+      state.activeAdminTab = tabKey;
+      const tabs = ['manageRequests', 'manageHospitals', 'manageServices', 'manageReports', 'manageUsers'];
+      tabs.forEach((t) => {
+        const btn = document.getElementById(`admtab-${t}`);
+        const panel = document.getElementById(`admpanel-${t}`);
+        if (t === tabKey) {
+          btn.classList.add('tab-active');
+          panel.classList.remove('hidden');
+        } else {
+          btn.classList.remove('tab-active');
+          panel.classList.add('hidden');
+        }
+      });
+    }
+
+    function renderAllAdminViews() {
+      // KPIs (FR-14)
+      document.getElementById('kpiUsers').textContent = state.users.length;
+      const activeCount = state.requests.filter((r) => r.status !== 'Resolved' && r.status !== 'Cancelled').length;
+      document.getElementById('kpiActiveSOS').textContent = activeCount;
+      document.getElementById('kpiHospitals').textContent = state.hospitals.length;
+      document.getElementById('kpiServices').textContent = state.services.length;
+      document.getElementById('kpiReports').textContent = state.reports.length;
+
+      // 1. SOS Requests Table (FR-16)
+      const reqTbody = document.getElementById('adminRequestsTableBody');
+      reqTbody.innerHTML = state.requests.map((r) => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-3 px-4 font-mono font-bold text-slate-700">${r.request_id}</td>
+          <td class="py-3 px-4 font-semibold text-navy-900">${r.user_name}</td>
+          <td class="py-3 px-4"><span class="font-bold text-crimson-700">${r.emergency_type}</span></td>
+          <td class="py-3 px-4 text-xs text-slate-600">${r.location_label}</td>
+          <td class="py-3 px-4 text-xs text-slate-600 max-w-xs">${r.description}</td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-500">${r.created_at}</td>
+          <td class="py-3 px-4">
+            <select onchange="adminUpdateRequestStatus('${r.request_id}', this.value)"
+              class="rounded-lg border px-2.5 py-1 text-xs font-bold ${getStatusBadgeClass(r.status)} cursor-pointer">
+              <option value="Pending" ${r.status === 'Pending' ? 'selected' : ''}>Pending</option>
+              <option value="Dispatched" ${r.status === 'Dispatched' ? 'selected' : ''}>Dispatched</option>
+              <option value="In Progress" ${r.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+              <option value="Resolved" ${r.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+              <option value="Cancelled" ${r.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+            </select>
+          </td>
+        </tr>
+      `).join('');
+
+      // 2. Hospitals List (FR-17)
+      const hospList = document.getElementById('adminHospitalsList');
+      hospList.innerHTML = state.hospitals.map((h) => `
+        <div class="p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 class="font-bold text-sm text-navy-900">${h.hospital_name}</h4>
+            <p class="text-xs text-slate-600">${h.address} • <strong>${h.phone}</strong></p>
+            <p class="text-[11px] text-indigo-700 mt-0.5">${h.services}</p>
+          </div>
+          <div class="flex gap-2 text-xs">
+            <button onclick="editAdminHospital(${h.hospital_id})" class="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 cursor-pointer">Edit</button>
+            <button onclick="deleteAdminHospital(${h.hospital_id})" class="px-3 py-1 rounded-lg bg-crimson-50 hover:bg-crimson-100 font-bold text-crimson-700 cursor-pointer">Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      // 3. Services List (FR-18)
+      const svcList = document.getElementById('adminServicesList');
+      svcList.innerHTML = state.services.map((s) => `
+        <div class="p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-navy-900 text-white font-mono text-xs font-bold">${s.contact_number}</span>
+              <h4 class="font-bold text-sm text-navy-900">${s.service_name}</h4>
+            </div>
+            <p class="text-xs text-slate-600 mt-1">${s.description}</p>
+          </div>
+          <div class="flex gap-2 text-xs">
+            <button onclick="editAdminService(${s.service_id})" class="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-slate-800 cursor-pointer">Edit</button>
+            <button onclick="deleteAdminService(${s.service_id})" class="px-3 py-1 rounded-lg bg-crimson-50 hover:bg-crimson-100 font-bold text-crimson-700 cursor-pointer">Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      // 4. Reports List (FR-19)
+      const repList = document.getElementById('adminReportsList');
+      repList.innerHTML = state.reports.map((rep) => `
+        <div class="p-4 flex flex-wrap items-center justify-between gap-3">
+          <div class="space-y-1 max-w-2xl">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs font-bold text-slate-500">${rep.report_id}</span>
+              <span class="font-bold text-sm text-navy-900">${rep.category}</span>
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[11px] font-bold">${rep.severity}</span>
+            </div>
+            <p class="text-xs text-slate-600">${rep.description}</p>
+            <p class="text-[11px] text-slate-500">Location: ${rep.location} • By ${rep.user_name} (${rep.created_at})</p>
+          </div>
+          <div>
+            <select onchange="adminUpdateReportStatus('${rep.report_id}', this.value)" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-bold bg-slate-50 cursor-pointer">
+              <option value="Submitted" ${rep.status === 'Submitted' ? 'selected' : ''}>Submitted</option>
+              <option value="Under Review" ${rep.status === 'Under Review' ? 'selected' : ''}>Under Review</option>
+              <option value="Action Taken" ${rep.status === 'Action Taken' ? 'selected' : ''}>Action Taken</option>
+              <option value="Closed" ${rep.status === 'Closed' ? 'selected' : ''}>Closed</option>
+            </select>
+          </div>
+        </div>
+      `).join('');
+
+      // 5. Users Table (FR-15)
+      const usersTbody = document.getElementById('adminUsersTableBody');
+      usersTbody.innerHTML = state.users.map((u) => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-3 px-4 font-mono text-xs text-slate-600">#${u.user_id}</td>
+          <td class="py-3 px-4 font-bold text-navy-900">${u.name}</td>
+          <td class="py-3 px-4 text-xs text-slate-600">${u.email}</td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-700">${u.mobile}</td>
+          <td class="py-3 px-4 text-xs text-slate-600">${u.address}</td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-500">${u.created_at}</td>
+        </tr>
+      `).join('');
+    }
+
+    function adminUpdateRequestStatus(requestId, newStatus) {
+      const idx = state.requests.findIndex((r) => r.request_id === requestId);
+      if (idx !== -1) {
+        state.requests[idx].status = newStatus;
+        persistAll();
+        renderAllAdminViews();
+        renderCitizenRequests();
+        showToast(`Request ${requestId} status updated to "${newStatus}" (TC13).`, 'success');
+      }
+    }
+
+    function adminUpdateReportStatus(reportId, newStatus) {
+      const idx = state.reports.findIndex((r) => r.report_id === reportId);
+      if (idx !== -1) {
+        state.reports[idx].status = newStatus;
+        persistAll();
+        renderIncidentReports();
+        showToast(`Incident Report ${reportId} updated to "${newStatus}".`, 'success');
+      }
+    }
+
+    // Admin Hospital CRUD (FR-17)
+    function saveAdminHospital(e) {
+      e.preventDefault();
+      const id = document.getElementById('admHospitalId').value;
+      const hospital_name = document.getElementById('admHospName').value.trim();
+      const address = document.getElementById('admHospAddress').value.trim();
+      const phone = document.getElementById('admHospPhone').value.trim();
+      const services = document.getElementById('admHospServices').value.trim();
+
+      if (id) {
+        const idx = state.hospitals.findIndex((h) => h.hospital_id === Number(id));
+        if (idx !== -1) {
+          state.hospitals[idx] = { hospital_id: Number(id), hospital_name, address, phone, services };
+        }
+        showToast('Hospital record updated.', 'success');
+      } else {
+        state.hospitals.push({
+          hospital_id: Date.now(),
+          hospital_name,
+          address,
+          phone,
+          services,
+        });
+        showToast('New hospital added to directory (FR-17).', 'success');
+      }
+
+      persistAll();
+      resetAdminHospitalForm();
+      renderAllAdminViews();
+      renderHospitals();
+    }
+
+    function editAdminHospital(id) {
+      const h = state.hospitals.find((item) => item.hospital_id === id);
+      if (!h) return;
+      document.getElementById('admHospitalId').value = h.hospital_id;
+      document.getElementById('admHospName').value = h.hospital_name;
+      document.getElementById('admHospAddress').value = h.address;
+      document.getElementById('admHospPhone').value = h.phone;
+      document.getElementById('admHospServices').value = h.services;
+      document.getElementById('admHospitalFormTitle').textContent = 'Edit Hospital Record';
+      document.getElementById('btnCancelHospEdit').classList.remove('hidden');
+    }
+
+    function deleteAdminHospital(id) {
+      state.hospitals = state.hospitals.filter((h) => h.hospital_id !== id);
+      persistAll();
+      renderAllAdminViews();
+      renderHospitals();
+      showToast('Hospital record deleted.', 'info');
+    }
+
+    function resetAdminHospitalForm() {
+      document.getElementById('admHospitalId').value = '';
+      document.getElementById('admHospName').value = '';
+      document.getElementById('admHospAddress').value = '';
+      document.getElementById('admHospPhone').value = '';
+      document.getElementById('admHospServices').value = '';
+      document.getElementById('admHospitalFormTitle').textContent = 'Add / Edit Hospital';
+      document.getElementById('btnCancelHospEdit').classList.add('hidden');
+    }
+
+    // Admin Service CRUD (FR-18)
+    function saveAdminService(e) {
+      e.preventDefault();
+      const id = document.getElementById('admServiceId').value;
+      const service_name = document.getElementById('admSvcName').value.trim();
+      const contact_number = document.getElementById('admSvcNumber').value.trim();
+      const description = document.getElementById('admSvcDesc').value.trim();
+
+      if (id) {
+        const idx = state.services.findIndex((s) => s.service_id === Number(id));
+        if (idx !== -1) {
+          state.services[idx] = { service_id: Number(id), service_name, contact_number, description };
+        }
+        showToast('Emergency service updated.', 'success');
+      } else {
+        state.services.push({
+          service_id: Date.now(),
+          service_name,
+          contact_number,
+          description,
+        });
+        showToast('New emergency service added (FR-18).', 'success');
+      }
+
+      persistAll();
+      resetAdminServiceForm();
+      renderAllAdminViews();
+      renderServicesDirectory();
+    }
+
+    function editAdminService(id) {
+      const s = state.services.find((item) => item.service_id === id);
+      if (!s) return;
+      document.getElementById('admServiceId').value = s.service_id;
+      document.getElementById('admSvcName').value = s.service_name;
+      document.getElementById('admSvcNumber').value = s.contact_number;
+      document.getElementById('admSvcDesc').value = s.description;
+      document.getElementById('admServiceFormTitle').textContent = 'Edit Emergency Service';
+      document.getElementById('btnCancelSvcEdit').classList.remove('hidden');
+    }
+
+    function deleteAdminService(id) {
+      state.services = state.services.filter((s) => s.service_id !== id);
+      persistAll();
+      renderAllAdminViews();
+      renderServicesDirectory();
+      showToast('Emergency service removed.', 'info');
+    }
+
+    function resetAdminServiceForm() {
+      document.getElementById('admServiceId').value = '';
+      document.getElementById('admSvcName').value = '';
+      document.getElementById('admSvcNumber').value = '';
+      document.getElementById('admSvcDesc').value = '';
+      document.getElementById('admServiceFormTitle').textContent = 'Add / Edit Emergency Service';
+      document.getElementById('btnCancelSvcEdit').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
